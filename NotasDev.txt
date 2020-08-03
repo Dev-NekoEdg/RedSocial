@@ -1,0 +1,38 @@
+Estableciendo conexión (2019-12-25)
+Cundo se coloca el script 'start' se pude activar con el comando 'npm'.
+Y al script 'start' se le coloca la instrucción de  nodemon (Paquete encagardo de detener el servidor y volver a subirlo cuando detecte un cambio) con el archivo donde
+estará el endpoint de la conexión, en exte caso sera el de index.js.
+
+
+
+Expresiones regulares en javaScript:
+https://developer.mozilla.org/es/docs/Web/JavaScript/Guide/Regular_Expressions
+
+
+/* Paquete de mongoose para paginar registros. */
+--> npm install --save mongoose-pagination
+
+
+
+*******************************************************************************
+MONGO DB
+
+para ordenar una consulta en Mongo se usa:
+--> {UserName: 1}
+entre {} se coloca la propiedad y se usa 1 para ASC y -1 para Desc
+
+
+
+
+*******************************************************************************
+Express
+
+https://expressjs.com/es/guide/routing.html
+
+--> 
+De la segunda forma la pagina está abierta a recibir cualquier parámetro GET por medio del 
+signo ? y &, sin embargo aunque comparten el método req.param(‘nombre de parámetro’) 
+estos valores pueden ser obtenidos también por el siguiente método:
+
+req.query.nombre_de_parametro
+Más info: https://adrixpho.wordpress.com/2014/06/19/manejo-de-router-y-parametros-en-expressjs-4/
