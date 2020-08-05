@@ -6,6 +6,7 @@ const paginate = require('mongoose-pagination');
 const servicioJwt = require('../services/jwt');
 const mensajesConstantes = require('../entidades/mensajesConstantes');
 const { Model } = require('mongoose');
+const path = require('path');
 
 function pruebas(request, response) {
 
@@ -241,9 +242,10 @@ function UpdateUsers(request, response) {
         return response.status(mensajesConstantes.codigoRespuesta.Forbidden).send(CreateResponse("No tienes permisoso suficientes para actualizar los datos de este usuario."));
     }
 
+    console.log(userNewData);
     // en el método de findByIdAndUpdate el tercer parametro es un JSon e inindica si se devuelve 
     // el objeto modificado con la propiedad "new" seteada en true.
-    Model.findByIdAndUpdate(userId, userNewData, {new : true} ,(error, userUpdated) => {
+    usuarioModel.findByIdAndUpdate(userId, userNewData, {new : true} ,(error, userUpdated) => {
         if(error){
             return response.status(mensajesConstantes.codigoRespuesta.Error).send(CreateResponse(mensajesConstantes.mensajeRespuesta.Error));
         }
@@ -257,6 +259,33 @@ function UpdateUsers(request, response) {
 
 
 }
+
+
+function UploadAvatar(request, response){
+    var userId = request.params.id
+    var userNewData = request.body;
+
+    //borrar la propiedad de password.
+    delete userNewData.Password;
+
+    if (userId != request.usuarioLoggedIn.sub) {
+        return response.status(mensajesConstantes.codigoRespuesta.Forbidden).send(CreateResponse("No tienes permisoso suficientes para actualizar los datos de este usuario."));
+    }
+    console.log('request');
+    console.log(request);
+
+    //Si enviamos algun archivo en la request, podemos tener la propiedad de files.
+    if(request.files){
+        console.log(request.files.image);
+        let filePath = request.file.image.path;
+        console.log(filePath);
+        let fileSplit = filePath.split('\\');
+    }
+
+
+}
+
+
 // Crea el mensaje respuesta para el error.
 // msg --> mensaje para colocar en el objeto.
 function CreateResponse(msg) {
@@ -271,5 +300,6 @@ module.exports = {
     LoginUsuario,
     ObtenerUsuarioPorId: GetUser,
     ObtenerUsuarios: GetUsers,
-    ActualizarUsuario: UpdateUsers
+    ActualizarUsuario: UpdateUsers,
+    SubirAvatar: UploadAvatar
 }

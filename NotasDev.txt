@@ -36,3 +36,12 @@ estos valores pueden ser obtenidos también por el siguiente método:
 
 req.query.nombre_de_parametro
 Más info: https://adrixpho.wordpress.com/2014/06/19/manejo-de-router-y-parametros-en-expressjs-4/
+
+
+https://github.com/Dev-NekoEdg/RedSocial.git
+
+
+2020-08-04
+para enviar imagenes a través de Postman:
+1. en los Headers nos aseguramos que no se tenga marcado el content-type.
+2. en el body; radiobutton de form-data; y se le coloca la propiedad.

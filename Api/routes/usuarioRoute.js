@@ -4,6 +4,11 @@ var express = require('express');
 var controller = require('../controllers/usuarioController');
 var mdAutenticacion = require('../middlewares/autenticacion');
 
+// middleware de connect multiparty para trabajar con ficheros.
+var multiPart = require('connect-multiparty');
+// middleware con la asignación de la carpeta donde se va a guardar los archivos del usuario.
+var mdUploadMultiPart = multiPart({uploadDir: './uploads/users'});
+
 // método router de Express, nos da acceso a los métodos HTTP (GET, POST, PUT, DELETE, etc...)
 var api = express.Router();
 
@@ -23,6 +28,11 @@ api.get('/Usuario/ObtenerUsuarios/:pagina/:cantidad?', mdAutenticacion.asegurarA
 api.get('/Usuario/ObtenerUsuarios', mdAutenticacion.asegurarAutenticacion, controller.ObtenerUsuarios);
 
 // Url para actualizar el usuario
-api.put('/Usuario/ActualizarUsuario', mdAutenticacion.asegurarAutenticacion, controller.ActualizarUsuario);
+api.put('/Usuario/ActualizarUsuario/:id', mdAutenticacion.asegurarAutenticacion, controller.ActualizarUsuario);
+
+// Url para subie el avatar del usuario.
+// Cuando se necesita más de un  middleware en una ruta se deben de enviar como un array.
+api.post('/Usuario/SubirAvatar/:id', [ mdAutenticacion.asegurarAutenticacion, mdUploadMultiPart ], controller.SubirAvatar);
+
 
 module.exports = api;
