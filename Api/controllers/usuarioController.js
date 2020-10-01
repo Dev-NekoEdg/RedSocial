@@ -6,7 +6,9 @@ const paginate = require('mongoose-pagination');
 const servicioJwt = require('../services/jwt');
 const mensajesConstantes = require('../entidades/mensajesConstantes');
 const { Model } = require('mongoose');
-const path = require('path');
+const path = require('path'); // permite trabajar con los archivos.
+const fs = require('fs'); // libreria de node para trabajar con Archivos.
+const extensionsOk = ['png', 'jpeg', 'jpj', 'gif'];
 
 function pruebas(request, response) {
 
@@ -245,46 +247,92 @@ function UpdateUsers(request, response) {
     console.log(userNewData);
     // en el método de findByIdAndUpdate el tercer parametro es un JSon e inindica si se devuelve 
     // el objeto modificado con la propiedad "new" seteada en true.
-    usuarioModel.findByIdAndUpdate(userId, userNewData, {new : true} ,(error, userUpdated) => {
-        if(error){
+    usuarioModel.findByIdAndUpdate(userId, userNewData, { new: true }, (error, userUpdated) => {
+        if (error) {
             return response.status(mensajesConstantes.codigoRespuesta.Error).send(CreateResponse(mensajesConstantes.mensajeRespuesta.Error));
         }
 
-        if(!userUpdated){
+        if (!userUpdated) {
             return response.status(mensajesConstantes.codigoRespuesta.NotFound).send(CreateResponse("No se pudo actualizar el usuariol."));
         }
 
-        return response.status(mensajesConstantes.codigoRespuesta.Ok).send({user : userUpdated});
+        return response.status(mensajesConstantes.codigoRespuesta.Ok).send({ user: userUpdated });
     });
 
 
 }
 
 
-function UploadAvatar(request, response){
-    var userId = request.params.id
-    var userNewData = request.body;
-
-    //borrar la propiedad de password.
-    delete userNewData.Password;
+function UploadAvatar(request, response) {
+    const userId = request.params.id
 
     if (userId != request.usuarioLoggedIn.sub) {
-        return response.status(mensajesConstantes.codigoRespuesta.Forbidden).send(CreateResponse("No tienes permisoso suficientes para actualizar los datos de este usuario."));
-    }
-    console.log('request');
-    console.log(request);
+        //return response.status(mensajesConstantes.codigoRespuesta.Forbidden).send(CreateResponse("No tienes permisoso suficientes para actualizar los datos de este usuario."));
 
-    //Si enviamos algun archivo en la request, podemos tener la propiedad de files.
-    if(request.files){
-        console.log(request.files.image);
-        let filePath = request.file.image.path;
+        // se le coloca return para que sagla del método, sino se genera mas de un headers por los returns que se acomulen.
+        return removeUploadedFiles(response, filePath, "No tienes permisoso suficientes para actualizar los datos de este usuario.");
+    }
+
+    console.log(request.files);
+    // Si enviamos algun archivo en la request, podemos tener la propiedad de files.
+    if (request.files) {
+        // en Postman, en el body, opción form-data el key de la imagen debe ser "image".
+        // si no se coloca no se puede leer, dado que files es una propiedad de tipo abjeto, NO de tipo array!
+        // por ende cada key es una PROPIEDAD del objeto files, no un elemento de un array.
+        const filePath = request.files.image.path;
         console.log(filePath);
-        let fileSplit = filePath.split('\\');
+
+        //const fileName = request.files.image.name; //obtien el nombre de la imagen que se sube, mas no, la que se guarda en el server.
+        const fileNameSplit = filePath.split('\\');
+        const fileName = fileNameSplit[(fileNameSplit.length - 1)];
+        console.log(fileName);
+
+        const fileExtSplit = fileName.split('.');
+        console.log(fileExtSplit);
+
+        const fileExt = fileExtSplit[1];
+        console.log(fileExt);
+
+
+        if (extensionsOk.indexOf(fileExt) == 0) {
+            // Actualiza DB
+
+            // findByIdAndUpdate([objetoId], [propiedad del modelo y valor que queremos cambiar], [indica que retorne el ojeto actualizado], callback error)
+            usuarioModel.findByIdAndUpdate(userId, { RutaImagen: fileName }, { new: true }, (error, userUpdated) => {
+                if (error) {
+                    console.log('Error');
+                    return response.status(mensajesConstantes.codigoRespuesta.Error).send(CreateResponse(mensajesConstantes.mensajeRespuesta.Error));
+                }
+        
+                if (!userUpdated) {
+                    console.log('!userUpdated');
+                    return response.status(mensajesConstantes.codigoRespuesta.NotFound).send(CreateResponse("No se pudo actualizar el usuariol."));
+                }
+                console.log('userUpdated:');
+                console.log(userUpdated);
+
+                return response.status(mensajesConstantes.codigoRespuesta.Ok).send({ user: userUpdated });
+            });
+
+        }
+        else {
+            // Elimina el archivo subido.
+            return removeUploadedFiles(response, filePath, "extensión no valida");
+        }
+        
+    } else {
+        return response.status(mensajesConstantes.codigoRespuesta.Ok).send(CreateResponse("No se ha subido niguna imagen."));
     }
-
-
+    
 }
 
+// esta funcion es privada, porque no se va a exportar.
+function removeUploadedFiles(response, filePath, message){
+    fs.unlink(filePath, (error) => {
+            return response.status(mensajesConstantes.codigoRespuesta.Ok).send(CreateResponse(message));
+    });
+    
+}
 
 // Crea el mensaje respuesta para el error.
 // msg --> mensaje para colocar en el objeto.
