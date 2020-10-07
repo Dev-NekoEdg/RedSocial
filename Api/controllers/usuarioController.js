@@ -303,7 +303,7 @@ function UploadAvatar(request, response) {
                     console.log('Error');
                     return response.status(mensajesConstantes.codigoRespuesta.Error).send(CreateResponse(mensajesConstantes.mensajeRespuesta.Error));
                 }
-        
+
                 if (!userUpdated) {
                     console.log('!userUpdated');
                     return response.status(mensajesConstantes.codigoRespuesta.NotFound).send(CreateResponse("No se pudo actualizar el usuariol."));
@@ -319,20 +319,38 @@ function UploadAvatar(request, response) {
             // Elimina el archivo subido.
             return removeUploadedFiles(response, filePath, "extensión no valida");
         }
-        
+
     } else {
         return response.status(mensajesConstantes.codigoRespuesta.Ok).send(CreateResponse("No se ha subido niguna imagen."));
     }
-    
+
 }
 
 // esta funcion es privada, porque no se va a exportar.
-function removeUploadedFiles(response, filePath, message){
+function removeUploadedFiles(response, filePath, message) {
     fs.unlink(filePath, (error) => {
-            return response.status(mensajesConstantes.codigoRespuesta.Ok).send(CreateResponse(message));
+        return response.status(mensajesConstantes.codigoRespuesta.Ok).send(CreateResponse(message));
     });
-    
+
 }
+
+// método que retorna la imagen del usuario.
+function getImagefile(request, response) {
+    const imageFile = request.params.imageFile;
+    const mainPath = './uploads/users/';
+    const imagePath = mainPath + imageFile;
+
+    // fs.exists --> ya no se usa...
+    var exists = fs.existsSync(imagePath); // estar pendiente por si no espera a que verifique si existe la imagen.
+    console.log(exists);
+    if (exists) {
+        response.sendFile(path.resolve(imagePath));
+    } else {
+        return response.status(mensajesConstantes.codigoRespuesta.Ok).send(CreateResponse('No existe la imagen...'));
+    }
+
+}
+
 
 // Crea el mensaje respuesta para el error.
 // msg --> mensaje para colocar en el objeto.
@@ -349,5 +367,6 @@ module.exports = {
     ObtenerUsuarioPorId: GetUser,
     ObtenerUsuarios: GetUsers,
     ActualizarUsuario: UpdateUsers,
-    SubirAvatar: UploadAvatar
+    SubirAvatar: UploadAvatar,
+    ObtenerAvatar: getImagefile
 }

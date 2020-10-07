@@ -34,5 +34,8 @@ api.put('/Usuario/ActualizarUsuario/:id', mdAutenticacion.asegurarAutenticacion,
 // Cuando se necesita más de un  middleware en una ruta se deben de enviar como un array.
 api.post('/Usuario/SubirAvatar/:id', [ mdAutenticacion.asegurarAutenticacion, mdUploadMultiPart ], controller.SubirAvatar);
 
+// Url para obtener la imagen del usuario.
+api.get('/Usuario/ObtenerAvatar/:imageFile', controller.ObtenerAvatar);
+
 
 module.exports = api;
