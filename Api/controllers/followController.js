@@ -136,6 +136,33 @@ function getFollowedUser(request, response) {
 
 }
 
+// Obtiene los serguidores o los que me siguen dependiendo de la request.params.followed, pero sin paginar
+// request.params.followed == null ? trae a quien yo sigo : trae a mis seguidores.
+function getMyFollows (request, response) {
+    const userId = request.usuarioLoggedIn.sub;
+
+    var find = modeloFollow.find({ 'usuarioId' : userId});
+
+    if (request.params.followed) {
+        find = modeloFollow.find({ 'seguidor' : userId});
+    }
+
+    find.populate('usuarioId seguidor').exec(
+        (error, resultData) =>{
+            if (error) {
+                return buildResponse(response,codigoRespuesta.Error, { message: mensajeRespuesta.Error } );
+            }
+
+            if(!resultData){
+                return buildResponse(response,codigoRespuesta.NotFound, { message: 'No sigues a ningún usuario' } );
+            }
+
+            return buildResponse(response, codigoRespuesta.Ok, resultData );
+        }
+    );
+}
+
+
 
 function buildResponse(response, code, objectResponse){
     return response.status(code).send(objectResponse);
@@ -147,5 +174,6 @@ module.exports = {
     saveFollow,
     deleteFollow,
     getFollowingUser,
-    getFollowedUser
+    getFollowedUser,
+    getMyFollows
 }

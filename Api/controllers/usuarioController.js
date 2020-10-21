@@ -10,6 +10,9 @@ const path = require('path'); // permite trabajar con los archivos.
 const fs = require('fs'); // libreria de node para trabajar con Archivos.
 const extensionsOk = ['png', 'jpeg', 'jpj', 'gif'];
 
+const followModel = require('../models/followModel');
+const { codigoRespuesta } = require('../entidades/mensajesConstantes');
+
 function pruebas(request, response) {
 
     response.status(200).send({
@@ -150,7 +153,7 @@ function LoginUsuario(request, response) {
         });
 }
 
-// obtiene un usuario por Id
+// se crea nueva funcion para ver funcionamiento de async.
 function GetUser(request, response) {
 
     // Cuando llegan datos por url (Get) usamos "params", cuando llegan datos por Post o Put
@@ -169,15 +172,95 @@ function GetUser(request, response) {
                 send({
                     message: 'Usuario no encontrado'
                 });
-        } else {
-            return response.status(mensajesConstantes.codigoRespuesta.Ok).
+        }
+
+        // función Async
+        followThisUser(request.usuarioLoggedIn.sub, id).then((valor) => {
+            return response.status(codigoRespuesta.Ok).send({
+                userFound, following: valor.following , followed: valor.followed
+            });
+        })
+
+
+    });
+}
+
+// con la palabra reservada "async" creamos funciones asincronas para poder realizar un flujo sincrono.
+// las funciones async retorna promesas. Metodos then y catch.
+async function followThisUser(identyUserId, userId) {
+
+    var following = await followModel.findOne({ "usuarioId": identyUserId, "seguidor": userId }).
+        exec().
+        then((dataResult) => {
+            return dataResult
+        }).
+        catch((error) => {
+            return handleError(error);
+        });
+
+    var followed = await followModel.findOne({ "usuarioId": userId, "seguidor": identyUserId }).
+        exec().
+        then((dataResult) => {
+            return dataResult
+        }).
+        catch((error) => {
+            // handleError: método de Node js para manejar errores por consola.
+            return handleError(error);
+        });
+
+    return { following, followed }
+}
+
+// obtiene un usuario por Id
+// 2020-10-20: se modifica para verificar el seguimiento.
+function GetUser_Deprecated(request, response) {
+
+    // Cuando llegan datos por url (Get) usamos "params", cuando llegan datos por Post o Put
+    // usamos  body.
+    const id = request.params.id;
+    usuarioModel.findById(id, (error, userFound) => {
+        if (error) {
+            return response.status(mensajesConstantes.codigoRespuesta.Error).
                 send({
-                    usuario: userFound
+                    message: mensajesConstantes.mensajeRespuesta.Error
                 });
         }
-    });
 
+        if (!userFound) {
+            return response.status(mensajesConstantes.codigoRespuesta.NotFound).
+                send({
+                    message: 'Usuario no encontrado'
+                });
+        } else {
+
+            // se modifica el método para que tambien indique si el usuario que estoy buscando lo estoy siguiendo.
+            followModel.findOne({ "usuarioId": request.usuarioLoggedIn.sub, "seguidor": id }).exec(
+                (error, dataResult) => {
+
+                    if (error) {
+                        return response.status(mensajesConstantes.codigoRespuesta.Error).send({ message: mensajesConstantes.mensajeRespuesta.Error });
+                    }
+
+                    return response.status(mensajesConstantes.codigoRespuesta.Ok).
+                        send({
+                            usuario: userFound,
+                            segidor: dataResult
+                        });
+                }
+            );
+
+            // return response.status(mensajesConstantes.codigoRespuesta.Ok).
+            //     send({
+            //         usuario: userFound
+            //     });
+        }
+    });
 }
+
+
+
+
+
 // Obtiene todos los usuarios
 function GetUsers(request, response) {
     // Tomamos el id del usuario que solicita la lista con el sub(subject) que 
