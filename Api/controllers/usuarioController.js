@@ -177,7 +177,7 @@ function GetUser(request, response) {
         // función Async
         followThisUser(request.usuarioLoggedIn.sub, id).then((valor) => {
             return response.status(codigoRespuesta.Ok).send({
-                userFound, following: valor.following , followed: valor.followed
+                userFound, following: valor.following, followed: valor.followed
             });
         })
 
@@ -186,7 +186,7 @@ function GetUser(request, response) {
 }
 
 // con la palabra reservada "async" creamos funciones asincronas para poder realizar un flujo sincrono.
-// las funciones async retorna promesas. Metodos then y catch.
+// las funciones async retorna promesas. Métodos then y catch.
 async function followThisUser(identyUserId, userId) {
 
     var following = await followModel.findOne({ "usuarioId": identyUserId, "seguidor": userId }).
@@ -302,18 +302,97 @@ function GetUsers(request, response) {
                         message: "No hay usuarios disponibles..."
                     });
             } else {
-                // Usamos la función de Math.ceil("numero") para hacer una aproximación de las páginas.
-                return response.status(mensajesConstantes.codigoRespuesta.Ok).
-                    send({
-                        pages: Math.ceil(count / itemsPerPage),
-                        total: count,
-                        users: usersList
-                    });
+
+                FollowUserId(usuarioActual.sub).then((value) => {
+
+                    return response.status(mensajesConstantes.codigoRespuesta.Ok).
+                        send({
+                            pages: Math.ceil(count / itemsPerPage),
+                            total: count,
+                            users: usersList,
+                            usersFollowing: value.following,
+                            usersFollowed: value.followed
+                        });
+                });
+
+                // // Usamos la función de Math.ceil("numero") para hacer una aproximación de las páginas.
+                // return response.status(mensajesConstantes.codigoRespuesta.Ok).
+                //     send({
+                //         pages: Math.ceil(count / itemsPerPage),
+                //         total: count,
+                //         users: usersList
+                //     });
             }
 
         });
 
 }
+
+// Obtiene array con los id de los usuarios que me siguen y un array de los usuarios que sigo.
+async function FollowUserId(userId) {
+
+    //con el select({ propiedad: 0}) quitamos la propiedad del select.
+    var following = await followModel.find({ "usuarioId": userId }).select({ '_id': 0, '__v': 0, 'usuarioId': 0 }).exec().then((data) => {
+        var arrayFollows = [];
+        data.forEach((follow) => {
+            arrayFollows.push(follow.seguidor);
+        });
+        return arrayFollows;
+    });
+    // cuando se tiene el 'then', en la función flecha solo va el  valor del dato obtenido. Dado que el error
+    // se obtiene en el 'catch'.
+    var followed = await followModel.find({ "seguidor": userId }).select({ '_id': 0, '__v': 0, 'seguidor': 0 }).exec().then((data) => {
+        var arrayFollows = [];
+        data.forEach((follow) => {
+            arrayFollows.push(follow.usuarioId);
+        });
+        return arrayFollows;
+    });
+
+    return {following, followed};
+}
+
+// Obtiene el número de 
+function GetCounters(request, response) {
+    const userId = request.params.id;
+    if(userId)
+    {
+        getCountFollows(userId).then((value)=> {
+            return response.status(mensajesConstantes.codigoRespuesta.Ok).
+            send(value);
+        });
+
+    }
+    else{
+        getCountFollows(request.usuarioLoggedIn.sub).then((value)=> {
+            return response.status(mensajesConstantes.codigoRespuesta.Ok).
+            send(value);
+        });
+    }
+}
+
+// Obtiene de manera asincrona los contadores de los follows.
+async function getCountFollows(userId){
+    var following = await followModel.count({"usuarioId" : userId}).
+    then((value) =>{
+        return value;
+    }).
+    catch((error)=>{
+        return handleError(error);
+    });
+
+    var followed = await followModel.count({"seguidor" : userId}).
+    then((value) =>{
+        return value;
+    }).
+    catch((error)=>{
+        return handleError(error);
+    });
+
+    return { following,  followed}
+}
+
+
 
 // actualiza el id
 function UpdateUsers(request, response) {
@@ -451,5 +530,6 @@ module.exports = {
     ObtenerUsuarios: GetUsers,
     ActualizarUsuario: UpdateUsers,
     SubirAvatar: UploadAvatar,
-    ObtenerAvatar: getImagefile
+    ObtenerAvatar: getImagefile,
+    ObtieneContadores: GetCounters
 }

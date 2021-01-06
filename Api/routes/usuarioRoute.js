@@ -1,8 +1,8 @@
 'use strict'
 
-var express = require('express');
-var controller = require('../controllers/usuarioController');
-var mdAutenticacion = require('../middlewares/autenticacion');
+const express = require('express');
+const controller = require('../controllers/usuarioController');
+const mdAutenticacion = require('../middlewares/autenticacion');
 
 // middleware de connect multiparty para trabajar con ficheros.
 var multiPart = require('connect-multiparty');
@@ -36,6 +36,10 @@ api.post('/Usuario/SubirAvatar/:id', [ mdAutenticacion.asegurarAutenticacion, md
 
 // Url para obtener la imagen del usuario.
 api.get('/Usuario/ObtenerAvatar/:imageFile', controller.ObtenerAvatar);
+
+// url para obtener los contadores de usaurios (CuantosSigo, CuantosMeSiguen).
+api.get('/Usuario/Contador/:id?',mdAutenticacion.asegurarAutenticacion, controller.ObtieneContadores);
+
 
 
 module.exports = api;
