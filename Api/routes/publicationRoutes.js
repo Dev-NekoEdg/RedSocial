@@ -21,5 +21,10 @@ api.post('/Publication/save', mdAutenticacion.asegurarAutenticacion, controller.
 // Obtienen todas las publicaciones que han hecho los seguidores.
 api.get('/Publication/getAll/:page?', mdAutenticacion.asegurarAutenticacion, controller.getPublications);
 
+// Método que obtiene una publicacion por su Id.
+api.get('/Publication/getById/:id', mdAutenticacion.asegurarAutenticacion, controller.getPublicationById);
+
+// Método que elimina una publicacion propia del usuario según el Id suministrado.
+api.delete('/Publication/delete/:id', mdAutenticacion.asegurarAutenticacion, controller.deletePublicationById);
 
 module.exports = api;

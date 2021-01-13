@@ -18,7 +18,8 @@ function prueba(request, response) {
     return response.status(mensajesConstantes.codigoRespuesta.Ok).send({ porpiedad: 'mensaje desde controller pblicacion' });
 }
 
-// guardar la publicación.
+// POST.
+// Guardar la publicación.
 function savePublication(request, response) {
     // como es un POST se debe usar request.body. request.params es para GET.
     if (!request.body.texto) {
@@ -44,6 +45,8 @@ function savePublication(request, response) {
     });
 }
 
+// GET.
+// Metodo que obtiene las publicaciones de los seguidores.
 function getPublications(request, response) {
 
     let page = 1;
@@ -58,15 +61,15 @@ function getPublications(request, response) {
         then((value) => {
             let arrayFollowed = [];
             value.forEach((follow) => {
-                arrayFollowed.push(follow);
+                arrayFollowed.push(follow.seguidor);
             });
 
-            console.log(arrayFollowed);
+            // console.log(arrayFollowed);
             // con el "$in" hacemos una busqueda con un array.
             // en este caso obtenemos los seguidores y buscamos las publicaciones que hicieron los nuestros seguidores.
             publicationModel.find({ usuarioId: { "$in": arrayFollowed } }).
                 sort('-fechaCreacion'). // supongo que con el"-" delante de la propiedad hace una busqueda descendiente.
-                populate('usuarioId'). //hacemos el join con la coleccion de Usuarios por el "usuarioId", que son los seguidores.
+                populate('usuarioId'). // hacemos el join con la coleccion de Usuarios por el "usuarioId", que son los seguidores.
                 paginate(page, itemsPerpage, (error, data, total) => {
                     if (error) {
                         return createResponse(response, codigoRespuesta.Error, 'Error obteniendo las publicaciones.');
@@ -78,7 +81,7 @@ function getPublications(request, response) {
                     return response.status(codigoRespuesta.Ok).send({
                         publications: data,
                         total,
-                        pages: Math.ceil(total / 5),
+                        pages: Math.ceil(total / itemsPerpage),
                     });
                 });
         }).
@@ -86,6 +89,44 @@ function getPublications(request, response) {
             return createResponse(response, codigoRespuesta.Error, 'Error obteniendo los seguidores.');
         });
 }
+
+// GET.
+// Método que obtiene una publicacion por su Id.
+function getPublicationById(request, response) {
+    const pubId = request.params.id;
+
+    publicationModel.findById(pubId).
+        then((value) => {
+            if (!value) {
+                return createResponse(response, codigoRespuesta.NotFound, 'Esta publicación no existe');
+            }
+
+            return response.status(codigoRespuesta.Ok).send(value);
+        }).
+        catch((error) => {
+            return createResponse(response, codigoRespuesta.Error, error);
+        });
+}
+
+// GET.
+// Método que elimina una publicacion propia del usuario según el Id suministrado.
+function deletePublicationById(request, response) {
+    const pubId = request.params.id;
+
+    // para buscar por el Id del documento debe ir entre '' con el _ .
+    publicationModel.find({ usuarioId: request.usuarioLoggedIn.sub, '_id': pubId }).remove().
+        then((value) => {
+            if (!value) {
+                return createResponse(response, codigoRespuesta.NotFound, 'No se pudo borrar la publicacion.');
+            }
+
+            return response.status(codigoRespuesta.Ok).send(value);
+        }).
+        catch((error) => {
+            return createResponse(response, codigoRespuesta.Error, error);
+        });
+}
+
 
 
 // método encargado de crear una response.
@@ -102,5 +143,7 @@ function createResponse(response, codigo, mensaje) {
 module.exports = {
     test: prueba,
     savePublication,
-    getPublications
+    getPublications,
+    getPublicationById,
+    deletePublicationById
 }
