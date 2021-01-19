@@ -27,4 +27,10 @@ api.get('/Publication/getById/:id', mdAutenticacion.asegurarAutenticacion, contr
 // Método que elimina una publicacion propia del usuario según el Id suministrado.
 api.delete('/Publication/delete/:id', mdAutenticacion.asegurarAutenticacion, controller.deletePublicationById);
 
+// Método para cargar una imagen en la publicación.
+api.post('/Publication/UploadImg/:id', [mdAutenticacion.asegurarAutenticacion, mdUploadMultiPart], controller.UploadImage);
+
+// método que retorna la imagen de la Publicación.
+api.get('/Publication/getImage/:id', mdAutenticacion.asegurarAutenticacion, controller.getImagefile);
+
 module.exports = api;

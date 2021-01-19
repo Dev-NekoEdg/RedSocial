@@ -8,9 +8,11 @@ const mensajesConstantes = require('../entidades/mensajesConstantes');
 const { Model } = require('mongoose');
 const path = require('path'); // permite trabajar con los archivos.
 const fs = require('fs'); // libreria de node para trabajar con Archivos.
-const extensionsOk = ['png', 'jpeg', 'jpj', 'gif'];
+const extensionsOk = ['png', 'jpeg', 'jpg', 'gif'];
 
 const followModel = require('../models/followModel');
+const publicationModel = require('../models/publicacionModel');
+
 const { codigoRespuesta } = require('../entidades/mensajesConstantes');
 
 function pruebas(request, response) {
@@ -389,7 +391,15 @@ async function getCountFollows(userId){
         return handleError(error);
     });
 
-    return { following,  followed}
+    var publications= await publicationModel.count({"usuarioId" : userId}).
+    then((value) =>{
+        return value;
+    }).
+    catch((error)=>{
+        return handleError(error);
+    });
+
+    return { following, followed, publications } ;
 }
 
 
@@ -456,7 +466,7 @@ function UploadAvatar(request, response) {
         console.log(fileExt);
 
 
-        if (extensionsOk.indexOf(fileExt) == 0) {
+        if (extensionsOk.indexOf(fileExt.toLowerCase()) >= 0) {
             // Actualiza DB
 
             // findByIdAndUpdate([objetoId], [propiedad del modelo y valor que queremos cambiar], [indica que retorne el ojeto actualizado], callback error)

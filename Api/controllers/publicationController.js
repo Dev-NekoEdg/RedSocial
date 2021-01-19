@@ -11,6 +11,7 @@ const followModel = require('../models/followModel');
 
 const mensajesConstantes = require('../entidades/mensajesConstantes');
 const { codigoRespuesta, mensajeRespuesta } = require('../entidades/mensajesConstantes');
+const extensionsOk = ['png', 'jpeg', 'jpg', 'gif'];
 
 
 function prueba(request, response) {
@@ -127,6 +128,108 @@ function deletePublicationById(request, response) {
         });
 }
 
+// POST.
+// Método para cargar una imagen en la publicación.
+function UploadImage(request, response) {
+    const publicationId = request.params.id
+
+    console.log(request.files);
+    // Si enviamos algun archivo en la request, podemos tener la propiedad de files.
+    if (request.files) {
+        // en Postman, en el body, opción form-data el key de la imagen debe ser "image".
+        // si no se coloca no se puede leer, dado que files es una propiedad de tipo abjeto, NO de tipo array!
+        // por ende cada key es una PROPIEDAD del objeto files, no un elemento de un array.
+        const filePath = request.files.image.path;
+        console.log(filePath);
+
+        //const fileName = request.files.image.name; //obtien el nombre de la imagen que se sube, mas no, la que se guarda en el server.
+        const fileNameSplit = filePath.split('\\');
+        const fileName = fileNameSplit[(fileNameSplit.length - 1)];
+        console.log(fileName);
+
+        const fileExtSplit = fileName.split('.');
+        console.log(fileExtSplit);
+
+        const fileExt = fileExtSplit[1];
+        console.log(fileExt);
+
+
+        if (extensionsOk.indexOf(fileExt.toLowerCase()) > 0) {
+
+            publicationModel.find({ usuarioId: request.usuarioLoggedIn.sub, '_id': publicationId }).
+            then((foundPublication)=>{
+                console.log('then del find');
+                console.log('foundPublication:');
+                console.log(foundPublication);
+                // Cuando no encuentra el registro retorna un []. se valida con el .length para que entre al if.
+                if (foundPublication.length <= 0)
+                    {
+                    return createResponse(response, codigoRespuesta.Error, 'No tienes permisos suficientes para modificar esta publicación');
+                }
+                else{
+                    // Actualiza DB
+                    // findByIdAndUpdate([objetoId], [propiedad del modelo y valor que queremos cambiar], [indica que retorne el ojeto actualizado], callback error)
+                    publicationModel.findByIdAndUpdate(publicationId, { archivo: fileName }, { new: true }, (error, publicationUpdated) => {
+                        if (error) {
+                            console.log('Error');
+                            return response.status(mensajesConstantes.codigoRespuesta.Error).send({message: mensajesConstantes.mensajeRespuesta.Error });
+                        }
+                        
+                        if (!publicationUpdated) {
+                            console.log('!publicationUpdated');
+                            return response.status(mensajesConstantes.codigoRespuesta.NotFound).send({message: "No se pudo actualizar la publicación."});
+                        }
+                                                
+                        return response.status(mensajesConstantes.codigoRespuesta.Ok).send({ publicationUpdated });
+                    });
+                }
+                    //preihrfg
+            }).
+            catch((error)=>{
+                fs.unlink(filePath, (error) => {
+                    return handleError(error);
+                });
+                return handleError(error);
+            });
+        }
+        else {
+            // Elimina el archivo subido.
+            return removeUploadedFiles(response, filePath, "extensión no valida");
+        }
+
+    } else {
+        return response.status(mensajesConstantes.codigoRespuesta.Ok).send({ message:"No se ha subido niguna imagen."});
+    }
+
+}
+
+// esta funcion es privada, porque no se va a exportar.
+function removeUploadedFiles(response, filePath, message) {
+    fs.unlink(filePath, (error) => {
+        return response.status(mensajesConstantes.codigoRespuesta.Ok).send({ message });
+    });
+
+}
+
+// GET.
+// método que retorna la imagen de la Publicación.
+ function getImagefile(request, response) {
+    const imageFile = request.params.id;
+    const mainPath = './uploads/publications/';
+    const imagePath = mainPath + imageFile;
+    console.log(imagePath);
+    // fs.exists --> ya no se usa...
+    var exists = fs.existsSync(imagePath); // estar pendiente por si no espera a que verifique si existe la imagen.
+    console.log(exists);
+    if (exists) {
+        response.sendFile(path.resolve(imagePath));
+    } else {
+        return response.status(mensajesConstantes.codigoRespuesta.Ok).send({message: 'No existe la imagen...'});
+    }
+
+}
+
+
 
 
 // método encargado de crear una response.
@@ -145,5 +248,7 @@ module.exports = {
     savePublication,
     getPublications,
     getPublicationById,
-    deletePublicationById
+    deletePublicationById,
+    UploadImage,
+    getImagefile
 }
