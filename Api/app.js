@@ -10,6 +10,8 @@ var rutaBase = '/api';
 var usuarioRoute = require('./routes/usuarioRoute');
 const followRoutes =  require('./routes/followRoute');
 const publicationRoutes = require('./routes/publicationRoutes');
+const messageRoutes = require('./routes/messageRoute');
+
 //middlewares
 //Body-Parser :con esta configuración se va poder interpretar la información en objetos json
 app.use(parser.urlencoded({
@@ -21,8 +23,10 @@ app.use(parser.json());
 
 //rutas
 app.use(rutaBase, usuarioRoute);
-app.use(rutaBase, followRoutes)
-app.use(rutaBase, publicationRoutes)
+app.use(rutaBase, followRoutes);
+app.use(rutaBase, publicationRoutes);
+app.use(rutaBase, messageRoutes);
+
 /*
 el app.use nos permite usar middlewares. El middleware hace es un proceso intermedio y el app.use hace 
 que el middleware se ejecute antes de ejecutar la acción del controlador.
