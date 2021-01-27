@@ -8,11 +8,17 @@ var api = express.Router();
 
 api.get('/message/pruebas', messageController.prueba);
 
-//Guardar mensaje.
+// Guardar mensaje.
 api.post('/message/save', mdAutenticacion.asegurarAutenticacion, messageController.saveMessage);
-// api.delete('/follow/delete/:id', mdAutenticacion.asegurarAutenticacion, followController.deleteFollow);
-// api.get('/follow/following/:id?/:page?', mdAutenticacion.asegurarAutenticacion, followController.getFollowingUser);
-// api.get('/follow/followers/:id?/:page?', mdAutenticacion.asegurarAutenticacion, followController.getFollowedUser);
+
+// Obtiene los mensajes que recibe el usuario logueado.
+api.get('/message/myMessages/:page?', mdAutenticacion.asegurarAutenticacion, messageController.getReceivedMessages);
+
+// Obtiene los mensajes que he enviado el usuario logueado.
+api.get('/message/messages/:page?', mdAutenticacion.asegurarAutenticacion, messageController.getSendedMessages);
+
+api.get('/message/countNoReadMessages/:page?', mdAutenticacion.asegurarAutenticacion, messageController.getNoReadMessages);
+
 
 // api.get('/follow/followsNoPaginate/:followed?', mdAutenticacion.asegurarAutenticacion, followController.getMyFollows);
 
